@@ -1,9 +1,9 @@
 #ifndef TRANSLATIONS_H
 #define TRANSLATIONS_H
-
+ 
 // Language support
-enum Language { LANG_EN = 0, LANG_ES = 1, LANG_DE = 2, LANG_FR = 3, LANG_TR = 4, LANG_SV = 5, LANG_IT = 6 };
-
+enum Language { LANG_EN = 0, LANG_ES = 1, LANG_DE = 2, LANG_FR = 3, LANG_TR = 4, LANG_SV = 5, LANG_IT = 6, LANG_NL = 7 };
+ 
 struct LocalizedStrings {
   const char* temp_placeholder;
   const char* feels_like_temp;
@@ -36,9 +36,9 @@ struct LocalizedStrings {
   const char* weekdays[7];
   const char* use_night_mode;
 };
-
+ 
 #define DEFAULT_CAPTIVE_SSID "Aura"
-
+ 
 static const LocalizedStrings strings_en = {
   "--°C", "Feels Like", "SEVEN DAY FORECAST", "HOURLY FORECAST",
   "Today", "Now", "am", "pm", "Noon", "Invalid hour",
@@ -67,7 +67,7 @@ static const LocalizedStrings strings_en = {
   {"Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"},
   "Dim screen at night"
 };
-
+ 
 static const LocalizedStrings strings_es = {
   "--°C", "Sensación", "PRONÓSTICO 7 DÍAS", "PRONÓSTICO POR HORAS",
   "Hoy", "Ahora", "am", "pm", "Mediodía", "Hora inválida",
@@ -98,7 +98,7 @@ static const LocalizedStrings strings_es = {
   {"Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"},
   "Pantalla noche"
 };
-
+ 
 static const LocalizedStrings strings_de = {
   "--°C", "Gefühlt", "7-TAGE VORHERSAGE", "STÜNDLICHE VORHERSAGE",
   "Heute", "Jetzt", "", "", "Mittag", "Ungültige Stunde",
@@ -131,7 +131,7 @@ static const LocalizedStrings strings_de = {
   {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"},
   "Nacht-Dimmen"
 };
-
+ 
 static const LocalizedStrings strings_fr = {
   "--°C", "Ressenti", "PRÉVISIONS 7 JOURS", "PRÉVISIONS HORAIRES",
   "Aujourd'hui", "Maintenant", "h", "h", "Midi", "Heure invalide",
@@ -164,7 +164,7 @@ static const LocalizedStrings strings_fr = {
   {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"},
   "Nuit écran"
 };
-
+ 
 static const LocalizedStrings strings_tr = {
   "--°C", "Hissedilen", "YEDI GÜNLÜK TAHMIN", "SAATLIK TAHMIN",
   "Bugün", "Simdi", "öö", "ös", "Öğle", "Geçersiz saat",
@@ -194,7 +194,7 @@ static const LocalizedStrings strings_tr = {
   {"Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"},
   "Gece kısık"
 };
-
+ 
 static const LocalizedStrings strings_sv = {
   "--°C", "Känns som", "7-DAGARS PROGNOS", "TIMPROGNOS",
   "Idag", "Nu", "", "", "Middag", "Ogiltig timme",
@@ -228,7 +228,7 @@ static const LocalizedStrings strings_sv = {
   {"Sön", "Man", "Tis", "Ons", "Tor", "Fre", "Lör"},
   "Nattdämpning"
 };
-
+ 
 static const LocalizedStrings strings_it = {
   "--°C", "Percepita", "PREVISIONI A 7 GIORNI", "PREVISIONI ORARIE",
   "Oggi", "Ora", "am", "pm", "Mezzog.", "Ora non valida",
@@ -257,7 +257,37 @@ static const LocalizedStrings strings_it = {
   {"Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"},
   "Schermo notte"
 };
-
+ 
+static const LocalizedStrings strings_nl = {
+  "--°C", "Voelt als", "ZEVEN DAGEN VOORUITZICHT", "UURLIJKS VOORUITZICHT",
+  "Vandaag", "Nu", "vm", "nm", "Middag", "Ongeldig uur",
+  "Helderheid:", "Locatie:", "Gebruik °F:", "24u:",
+  "Opslaan", "Annuleren", "Sluiten", "Locatie", "Wi-Fi resetten",
+  "Resetten", "Locatie wijzigen", "Aura Instellingen",
+  "Stad:", "Zoekresultaten", "bijv. Amsterdam",
+  "Wi-Fi Configuratie:\n\n"
+  "Verbind uw telefoon\n"
+  "of laptop met het\n"
+  "tijdelijke Wi-Fi\n"
+  "toegangspunt "
+  DEFAULT_CAPTIVE_SSID
+  "\n"
+  "om te configureren.\n\n"
+  "Als u geen\n"
+  "configuratiescherm ziet\n"
+  "na verbinding,\n"
+  "bezoek http://192.168.4.1\n"
+  "in uw webbrowser.",
+  "Weet u zeker dat u de "
+  "Wi-Fi gegevens wilt resetten?\n\n"
+  "U moet opnieuw verbinding maken met het Wi-Fi netwerk " DEFAULT_CAPTIVE_SSID
+  " via uw telefoon of browser om "
+  "de Wi-Fi gegevens opnieuw in te stellen.",
+  "Taal:",
+  {"Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"},
+  "Scherm dimmen 's nachts"
+};
+ 
 static const LocalizedStrings* get_strings(Language current_language) {
   switch (current_language) {
     case LANG_ES: return &strings_es;
@@ -266,8 +296,9 @@ static const LocalizedStrings* get_strings(Language current_language) {
     case LANG_TR: return &strings_tr;
     case LANG_SV: return &strings_sv;
     case LANG_IT: return &strings_it;
+    case LANG_NL: return &strings_nl;
     default: return &strings_en;
   }
 }
-
+ 
 #endif // TRANSLATIONS_H
