@@ -1237,7 +1237,7 @@ void fetch_and_update_weather() {
         } else {
           lv_label_set_text(lbl_hourly[i], hour_name.c_str());
         }
-        lv_label_set_text_fmt(lbl_precipitation_probability[i], "R:%.0f%%", precipitation_probability);
+        lv_label_set_text_fmt(lbl_precipitation_probability[i], "%.0f%%", precipitation_probability);
         lv_label_set_text_fmt(lbl_hourly_temp[i], "%.0f°%c", temp, unit);
         lv_label_set_text_fmt(lbl_hourly_wind[i], "%.0f", h_wind);
         lv_img_set_src(img_hourly[i], choose_icon(hourly_weather_codes[idx].as<int>(), hourly_is_day[idx].as<int>()));
