@@ -529,7 +529,7 @@ void create_ui() {
     lv_obj_align(lbl_daily_low[i], LV_ALIGN_TOP_RIGHT, -44, i * 24);
 
     lv_img_set_src(img_daily[i], &icon_partly_cloudy);
-    lv_obj_align(img_daily[i], LV_ALIGN_TOP_LEFT, 60, i * 24);
+    lv_obj_align(img_daily[i], LV_ALIGN_TOP_LEFT, 72, i * 24);
 
     lbl_daily_precip[i] = lv_label_create(box_daily);
     lv_label_set_text(lbl_daily_precip[i], "");
