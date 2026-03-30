@@ -40,6 +40,8 @@ struct LocalizedStrings {
   const char* night_to;
   const char* rain_header;
   const char* wind_header;
+  const char* rain_chart_label;
+  const char* screen_timeout;
 };
  
 #define DEFAULT_CAPTIVE_SSID "Aura"
@@ -72,7 +74,9 @@ static const LocalizedStrings strings_en = {
   {"Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"},
   "Dim screen at night",
   "Updating...", "From:", "To:",
-  "Rain", "Wind"
+  "Rain", "Wind",
+  "RAIN PROBABILITY — 24H",
+  "Auto-home (min):"
 };
  
 static const LocalizedStrings strings_es = {
@@ -105,7 +109,9 @@ static const LocalizedStrings strings_es = {
   {"Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"},
   "Pantalla noche",
   "Actualizando...", "De:", "A:",
-  "Lluvia", "Viento"
+  "Lluvia", "Viento",
+  "PROBABILIDAD DE LLUVIA",
+  "Auto-inicio (min):"
 };
  
 static const LocalizedStrings strings_de = {
@@ -140,7 +146,9 @@ static const LocalizedStrings strings_de = {
   {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"},
   "Nacht-Dimmen",
   "Laden...", "Von:", "Bis:",
-  "Regen", "Wind"
+  "Regen", "Wind",
+  "REGENWAHRSCHEINLICHKEIT",
+  "Auto-Start (Min):"
 };
  
 static const LocalizedStrings strings_fr = {
@@ -175,7 +183,9 @@ static const LocalizedStrings strings_fr = {
   {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"},
   "Nuit écran",
   "Mise a jour...", "De:", "A:",
-  "Pluie", "Vent"
+  "Pluie", "Vent",
+  "PROBABILITE DE PLUIE",
+  "Retour auto (min):"
 };
  
 static const LocalizedStrings strings_tr = {
@@ -207,7 +217,9 @@ static const LocalizedStrings strings_tr = {
   {"Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"},
   "Gece kısık",
   "Guncelleniyor...", "Baslangic:", "Bitis:",
-  "Yagmur", "Ruzgar"
+  "Yagmur", "Ruzgar",
+  "YAGMUR OLASILIGI",
+  "Oto-ana (dk):"
 };
  
 static const LocalizedStrings strings_sv = {
@@ -243,7 +255,9 @@ static const LocalizedStrings strings_sv = {
   {"Sön", "Man", "Tis", "Ons", "Tor", "Fre", "Lör"},
   "Nattdämpning",
   "Uppdaterar...", "Fran:", "Till:",
-  "Regn", "Vind"
+  "Regn", "Vind",
+  "REGNSANNOLIKHET — 24H",
+  "Auto-hem (min):"
 };
  
 static const LocalizedStrings strings_it = {
@@ -274,7 +288,9 @@ static const LocalizedStrings strings_it = {
   {"Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"},
   "Schermo notte",
   "Aggiornamento...", "Da:", "A:",
-  "Pioggia", "Vento"
+  "Pioggia", "Vento",
+  "PROBABILITA DI PIOGGIA",
+  "Auto-casa (min):"
 };
  
 static const LocalizedStrings strings_nl = {
@@ -306,7 +322,9 @@ static const LocalizedStrings strings_nl = {
   {"Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"},
   "Scherm dimmen 's nachts",
   "Bijwerken...", "Van:", "Tot:",
-  "Regen", "Wind"
+  "Regen", "Wind",
+  "REGENKANS — 24 UUR",
+  "Auto-thuis (min):"
 };
  
 static const LocalizedStrings* get_strings(Language current_language) {
