@@ -25,6 +25,7 @@
 #define LOCATION_DEFAULT "London"
 #define DEFAULT_CAPTIVE_SSID "Aura"
 #define UPDATE_INTERVAL 600000UL  // 10 minutes
+#define HOURLY_COUNT 12
 
 // Night mode starts at 10pm and ends at 6am
 #define NIGHT_MODE_START_HOUR 22
@@ -99,10 +100,11 @@ static lv_obj_t *lbl_daily_day[7];
 static lv_obj_t *lbl_daily_high[7];
 static lv_obj_t *lbl_daily_low[7];
 static lv_obj_t *img_daily[7];
-static lv_obj_t *lbl_hourly[7];
-static lv_obj_t *lbl_precipitation_probability[7];
-static lv_obj_t *lbl_hourly_temp[7];
-static lv_obj_t *img_hourly[7];
+static lv_obj_t *lbl_hourly[HOURLY_COUNT];
+static lv_obj_t *lbl_precipitation_probability[HOURLY_COUNT];
+static lv_obj_t *lbl_hourly_temp[HOURLY_COUNT];
+static lv_obj_t *img_hourly[HOURLY_COUNT];
+static lv_obj_t *lbl_hourly_wind[HOURLY_COUNT];
 static lv_obj_t *lbl_loc;
 static lv_obj_t *loc_ta;
 static lv_obj_t *results_dd;
@@ -508,33 +510,51 @@ void create_ui() {
   lv_obj_set_style_bg_opa(box_hourly, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(box_hourly, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_border_width(box_hourly, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_clear_flag(box_hourly, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_scrollbar_mode(box_hourly, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scrollbar_mode(box_hourly, LV_SCROLLBAR_MODE_ACTIVE);
   lv_obj_set_style_pad_all(box_hourly, 10, LV_PART_MAIN);
   lv_obj_set_style_pad_gap(box_hourly, 0, LV_PART_MAIN);
   lv_obj_add_event_cb(box_hourly, hourly_cb, LV_EVENT_CLICKED, NULL);
 
-  for (int i = 0; i < 7; i++) {
+  // Header row for hourly columns
+  lv_obj_t *lbl_rain_hdr = lv_label_create(box_hourly);
+  lv_label_set_text(lbl_rain_hdr, strings->rain_header);
+  lv_obj_set_style_text_font(lbl_rain_hdr, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_color(lbl_rain_hdr, lv_color_hex(0xd0f0ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align(lbl_rain_hdr, LV_ALIGN_TOP_RIGHT, -48, -2);
+
+  lv_obj_t *lbl_wind_hdr = lv_label_create(box_hourly);
+  lv_label_set_text(lbl_wind_hdr, strings->wind_header);
+  lv_obj_set_style_text_font(lbl_wind_hdr, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_color(lbl_wind_hdr, lv_color_hex(0xd0f0ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align(lbl_wind_hdr, LV_ALIGN_TOP_RIGHT, -90, -2);
+
+  for (int i = 0; i < HOURLY_COUNT; i++) {
     lbl_hourly[i] = lv_label_create(box_hourly);
     lbl_precipitation_probability[i] = lv_label_create(box_hourly);
     lbl_hourly_temp[i] = lv_label_create(box_hourly);
     img_hourly[i] = lv_img_create(box_hourly);
+    lbl_hourly_wind[i] = lv_label_create(box_hourly);
 
     lv_obj_add_style(lbl_hourly[i], &default_label_style, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(lbl_hourly[i], get_font_16(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(lbl_hourly[i], LV_ALIGN_TOP_LEFT, 2, i * 24);
+    lv_obj_set_style_text_font(lbl_hourly[i], get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(lbl_hourly[i], LV_ALIGN_TOP_LEFT, 2, 18 + i * 20);
 
     lv_obj_add_style(lbl_hourly_temp[i], &default_label_style, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(lbl_hourly_temp[i], get_font_16(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(lbl_hourly_temp[i], LV_ALIGN_TOP_RIGHT, 0, i * 24);
+    lv_obj_set_style_text_font(lbl_hourly_temp[i], get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(lbl_hourly_temp[i], LV_ALIGN_TOP_RIGHT, 0, 18 + i * 20);
 
     lv_label_set_text(lbl_precipitation_probability[i], "");
     lv_obj_set_style_text_color(lbl_precipitation_probability[i], lv_color_hex(0xb9ecff), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(lbl_precipitation_probability[i], get_font_16(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(lbl_precipitation_probability[i], LV_ALIGN_TOP_RIGHT, -55, i * 24);
+    lv_obj_set_style_text_font(lbl_precipitation_probability[i], get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(lbl_precipitation_probability[i], LV_ALIGN_TOP_RIGHT, -48, 18 + i * 20);
 
     lv_img_set_src(img_hourly[i], &icon_partly_cloudy);
-    lv_obj_align(img_hourly[i], LV_ALIGN_TOP_LEFT, 72, i * 24);
+    lv_obj_align(img_hourly[i], LV_ALIGN_TOP_LEFT, 58, 18 + i * 20);
+
+    lv_label_set_text(lbl_hourly_wind[i], "");
+    lv_obj_set_style_text_color(lbl_hourly_wind[i], lv_color_hex(0xb9ecff), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(lbl_hourly_wind[i], get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(lbl_hourly_wind[i], LV_ALIGN_TOP_RIGHT, -90, 18 + i * 20);
   }
 
   lv_obj_add_flag(box_hourly, LV_OBJ_FLAG_HIDDEN);
@@ -862,7 +882,7 @@ void create_settings_window() {
   lv_obj_t *lbl_24hr = lv_label_create(cont);
   lv_label_set_text(lbl_24hr, strings->use_24hr);
   lv_obj_set_style_text_font(lbl_24hr, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_align_to(lbl_24hr, unit_switch, LV_ALIGN_OUT_RIGHT_MID, 6, 0);
+  lv_obj_align_to(lbl_24hr, lbl_u, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
 
   clock_24hr_switch = lv_switch_create(cont);
   lv_obj_align_to(clock_24hr_switch, lbl_24hr, LV_ALIGN_OUT_RIGHT_MID, 6, 0);
@@ -877,7 +897,7 @@ void create_settings_window() {
   lv_obj_t *lbl_loc_l = lv_label_create(cont);
   lv_label_set_text(lbl_loc_l, strings->location);
   lv_obj_set_style_text_font(lbl_loc_l, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_align_to(lbl_loc_l, lbl_u, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
+  lv_obj_align_to(lbl_loc_l, lbl_24hr, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
 
   lbl_loc = lv_label_create(cont);
   lv_label_set_text(lbl_loc, location.c_str());
@@ -939,7 +959,7 @@ void create_settings_window() {
   // Close Settings button
   btn_close_obj = lv_btn_create(cont);
   lv_obj_set_size(btn_close_obj, 80, 40);
-  lv_obj_align(btn_close_obj, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+  lv_obj_align_to(btn_close_obj, btn_reset, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, 8);
   lv_obj_add_event_cb(btn_close_obj, settings_event_handler, LV_EVENT_CLICKED, NULL);
 
   // Cancel button
@@ -1111,8 +1131,8 @@ void fetch_and_update_weather() {
                + latitude + "&longitude=" + longitude
                + "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,relative_humidity_2m"
                + "&daily=temperature_2m_min,temperature_2m_max,weather_code"
-               + "&hourly=temperature_2m,precipitation_probability,is_day,weather_code"
-               + "&forecast_hours=24"
+               + "&hourly=temperature_2m,precipitation_probability,wind_speed_10m,is_day,weather_code"
+               + "&forecast_hours=36"
                + "&timezone=auto";
 
   HTTPClient http;
@@ -1181,6 +1201,7 @@ void fetch_and_update_weather() {
       JsonArray hours = doc["hourly"]["time"].as<JsonArray>();
       JsonArray hourly_temps = doc["hourly"]["temperature_2m"].as<JsonArray>();
       JsonArray precipitation_probabilities = doc["hourly"]["precipitation_probability"].as<JsonArray>();
+      JsonArray hourly_winds = doc["hourly"]["wind_speed_10m"].as<JsonArray>();
       JsonArray hourly_weather_codes = doc["hourly"]["weather_code"].as<JsonArray>();
       JsonArray hourly_is_day = doc["hourly"]["is_day"].as<JsonArray>();
 
@@ -1198,7 +1219,7 @@ void fetch_and_update_weather() {
         }
       }
 
-      for (int i = 0; i < 7; i++) {
+      for (int i = 0; i < HOURLY_COUNT; i++) {
         int idx = hourly_start_idx + i;
         if (idx >= (int)hours.size()) break;
         const char *date = hours[idx];  // "YYYY-MM-DDTHH:MM"
@@ -1207,6 +1228,7 @@ void fetch_and_update_weather() {
 
         float precipitation_probability = precipitation_probabilities[idx].as<float>();
         float temp = hourly_temps[idx].as<float>();
+        float h_wind = hourly_winds[idx].as<float>();
         if (use_fahrenheit) {
           temp = temp * 9.0 / 5.0 + 32.0;
         }
@@ -1216,8 +1238,9 @@ void fetch_and_update_weather() {
         } else {
           lv_label_set_text(lbl_hourly[i], hour_name.c_str());
         }
-        lv_label_set_text_fmt(lbl_precipitation_probability[i], "%.0f%%", precipitation_probability);
+        lv_label_set_text_fmt(lbl_precipitation_probability[i], "R:%.0f%%", precipitation_probability);
         lv_label_set_text_fmt(lbl_hourly_temp[i], "%.0f°%c", temp, unit);
+        lv_label_set_text_fmt(lbl_hourly_wind[i], "%.0f", h_wind);
         lv_img_set_src(img_hourly[i], choose_icon(hourly_weather_codes[idx].as<int>(), hourly_is_day[idx].as<int>()));
       }
 

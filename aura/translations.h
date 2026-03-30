@@ -38,6 +38,8 @@ struct LocalizedStrings {
   const char* updating;
   const char* night_from;
   const char* night_to;
+  const char* rain_header;
+  const char* wind_header;
 };
  
 #define DEFAULT_CAPTIVE_SSID "Aura"
@@ -69,7 +71,8 @@ static const LocalizedStrings strings_en = {
   "Language:",
   {"Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"},
   "Dim screen at night",
-  "Updating...", "From:", "To:"
+  "Updating...", "From:", "To:",
+  "Rain", "Wind"
 };
  
 static const LocalizedStrings strings_es = {
@@ -101,7 +104,8 @@ static const LocalizedStrings strings_es = {
   "Idioma:",
   {"Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"},
   "Pantalla noche",
-  "Actualizando...", "De:", "A:"
+  "Actualizando...", "De:", "A:",
+  "Lluvia", "Viento"
 };
  
 static const LocalizedStrings strings_de = {
@@ -135,7 +139,8 @@ static const LocalizedStrings strings_de = {
   "Sprache:",
   {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"},
   "Nacht-Dimmen",
-  "Laden...", "Von:", "Bis:"
+  "Laden...", "Von:", "Bis:",
+  "Regen", "Wind"
 };
  
 static const LocalizedStrings strings_fr = {
@@ -169,7 +174,8 @@ static const LocalizedStrings strings_fr = {
   "Langue:",
   {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"},
   "Nuit écran",
-  "Mise a jour...", "De:", "A:"
+  "Mise a jour...", "De:", "A:",
+  "Pluie", "Vent"
 };
  
 static const LocalizedStrings strings_tr = {
@@ -200,7 +206,8 @@ static const LocalizedStrings strings_tr = {
   "Dil:",
   {"Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"},
   "Gece kısık",
-  "Guncelleniyor...", "Baslangic:", "Bitis:"
+  "Guncelleniyor...", "Baslangic:", "Bitis:",
+  "Yagmur", "Ruzgar"
 };
  
 static const LocalizedStrings strings_sv = {
@@ -235,7 +242,8 @@ static const LocalizedStrings strings_sv = {
   "Sprak:",
   {"Sön", "Man", "Tis", "Ons", "Tor", "Fre", "Lör"},
   "Nattdämpning",
-  "Uppdaterar...", "Fran:", "Till:"
+  "Uppdaterar...", "Fran:", "Till:",
+  "Regn", "Vind"
 };
  
 static const LocalizedStrings strings_it = {
@@ -265,7 +273,8 @@ static const LocalizedStrings strings_it = {
   "Lingua:",
   {"Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"},
   "Schermo notte",
-  "Aggiornamento...", "Da:", "A:"
+  "Aggiornamento...", "Da:", "A:",
+  "Pioggia", "Vento"
 };
  
 static const LocalizedStrings strings_nl = {
@@ -296,7 +305,8 @@ static const LocalizedStrings strings_nl = {
   "Taal:",
   {"Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"},
   "Scherm dimmen 's nachts",
-  "Bijwerken...", "Van:", "Tot:"
+  "Bijwerken...", "Van:", "Tot:",
+  "Regen", "Wind"
 };
  
 static const LocalizedStrings* get_strings(Language current_language) {
