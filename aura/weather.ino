@@ -1132,7 +1132,6 @@ void fetch_and_update_weather() {
                + "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,relative_humidity_2m"
                + "&daily=temperature_2m_min,temperature_2m_max,weather_code"
                + "&hourly=temperature_2m,precipitation_probability,wind_speed_10m,is_day,weather_code"
-               + "&forecast_hours=36"
                + "&timezone=auto";
 
   HTTPClient http;
