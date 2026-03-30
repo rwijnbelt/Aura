@@ -5,6 +5,32 @@ Aura is a simple weather widget that runs on ESP32-2432S028R ILI9341 devices wit
 This is just the source code for the project. This project includes a case design and assembly instructions. The complete instructions are available
 here: https://makerworld.com/en/models/1382304-aura-smart-weather-forecast-display
 
+### What's new in v1.0.0 (vs. original)
+
+This fork of the original Aura project adds a significant number of new features and UI improvements:
+
+**New data & screens**
+- Sunrise, UV index max, and sunset displayed in the top section of the home screen
+- Wind direction (cardinal: N / NE / SW etc.) alongside wind speed
+- Daily precipitation totals (mm) in the 7-day forecast
+- Third swipeable screen: 24-hour rain probability bar chart
+- Wind speed column added to the hourly forecast screen
+
+**Settings**
+- Auto-return to home screen after a configurable timeout (0–60 min, 0 = off)
+- Night mode dim hours are now configurable (set start and end hour via spinbox)
+- 24-hour clock toggle
+
+**Languages**
+- Added Dutch (Nederlands) — 8 languages total: English, Español, Deutsch, Français, Türkçe, Svenska, Italiano, Nederlands
+
+**UI / layout**
+- Reduced box margins and padding for more usable screen real estate
+- Top section elements (feels like, wind, sun/UV) spread with better vertical spacing
+- Hourly forecast is scrollable and shows 12 entries (was limited to fewer rows)
+- Rain probability label clarified (removed ambiguous "R:" prefix)
+- Fixed "Today" label overlapping the weather icon for longer translations (e.g. "Vandaag")
+
 ### License
 
 You can use the weather.ino code here under the terms of the GPL 3.0 license.
