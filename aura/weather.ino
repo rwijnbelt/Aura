@@ -73,8 +73,15 @@ static char latitude[16] = LATITUDE_DEFAULT;
 static char longitude[16] = LONGITUDE_DEFAULT;
 static String location = String(LOCATION_DEFAULT);
 static char dd_opts[512];
-static DynamicJsonDocument geoDoc(8 * 1024);
+static JsonDocument geoDoc;
 static JsonArray geoResults;
+
+// Settings dirty flag - only refetch weather if unit changed
+static bool weather_settings_dirty = false;
+
+// Configurable night mode hours
+static int night_mode_start_hour = NIGHT_MODE_START_HOUR;
+static int night_mode_end_hour = NIGHT_MODE_END_HOUR;
 
 // Screen dimming variables
 static bool night_mode_active = false;
@@ -109,6 +116,10 @@ static lv_obj_t *clock_24hr_switch;
 static lv_obj_t *night_mode_switch;
 static lv_obj_t *language_dropdown;
 static lv_obj_t *lbl_clock;
+static lv_obj_t *night_start_spinbox = nullptr;
+static lv_obj_t *night_end_spinbox = nullptr;
+static lv_obj_t *lbl_today_wind_humidity;
+static lv_obj_t *lbl_loading;
 
 // Weather icons
 LV_IMG_DECLARE(icon_blizzard);
@@ -343,6 +354,8 @@ void setup() {
   uint32_t brightness = prefs.getUInt("brightness", 255);
   use_24_hour = prefs.getBool("use24Hour", false);
   current_language = (Language)prefs.getUInt("language", LANG_EN);
+  night_mode_start_hour = prefs.getUInt("nightStart", NIGHT_MODE_START_HOUR);
+  night_mode_end_hour = prefs.getUInt("nightEnd", NIGHT_MODE_END_HOUR);
   analogWrite(LCD_BACKLIGHT_PIN, brightness);
 
   // Check for Wi-Fi config and request it if not available
@@ -432,6 +445,19 @@ void create_ui() {
   lv_obj_set_style_text_font(lbl_today_feels_like, get_font_14(), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_color(lbl_today_feels_like, lv_color_hex(0xe4ffff), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_align(lbl_today_feels_like, LV_ALIGN_TOP_MID, 45, 75);
+
+  lbl_today_wind_humidity = lv_label_create(scr);
+  lv_label_set_text(lbl_today_wind_humidity, "");
+  lv_obj_set_style_text_font(lbl_today_wind_humidity, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_color(lbl_today_wind_humidity, lv_color_hex(0xe4ffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align(lbl_today_wind_humidity, LV_ALIGN_TOP_MID, 45, 90);
+
+  lbl_loading = lv_label_create(scr);
+  lv_label_set_text(lbl_loading, "");
+  lv_obj_set_style_text_font(lbl_loading, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_color(lbl_loading, lv_color_hex(0xffff99), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align(lbl_loading, LV_ALIGN_TOP_RIGHT, -10, 16);
+  lv_obj_add_flag(lbl_loading, LV_OBJ_FLAG_HIDDEN);
 
   lbl_forecast = lv_label_create(scr);
   lv_label_set_text(lbl_forecast, strings->seven_day_forecast);
@@ -523,14 +549,27 @@ void create_ui() {
 
 void populate_results_dropdown() {
   dd_opts[0] = '\0';
+  size_t remaining = sizeof(dd_opts) - 1;
   for (JsonObject item : geoResults) {
-    strcat(dd_opts, item["name"].as<const char *>());
-    if (item["admin1"]) {
-      strcat(dd_opts, ", ");
-      strcat(dd_opts, item["admin1"].as<const char *>());
+    const char *name = item["name"].as<const char *>();
+    size_t name_len = strlen(name);
+    if (name_len >= remaining) break;
+    strncat(dd_opts, name, remaining);
+    remaining -= name_len;
+    if (item["admin1"] && remaining > 3) {
+      strncat(dd_opts, ", ", remaining);
+      remaining -= 2;
+      const char *admin = item["admin1"].as<const char *>();
+      size_t admin_len = strlen(admin);
+      if (admin_len < remaining) {
+        strncat(dd_opts, admin, remaining);
+        remaining -= admin_len;
+      }
     }
-
-    strcat(dd_opts, "\n");
+    if (remaining > 1) {
+      strncat(dd_opts, "\n", remaining);
+      remaining -= 1;
+    }
   }
 
   if (geoResults.size() > 0) {
@@ -777,11 +816,38 @@ void create_settings_window() {
   }
   lv_obj_add_event_cb(night_mode_switch, settings_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
 
+  // Night mode hour range row
+  lv_obj_t *lbl_night_from = lv_label_create(cont);
+  lv_label_set_text(lbl_night_from, strings->night_from);
+  lv_obj_set_style_text_font(lbl_night_from, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align_to(lbl_night_from, lbl_night_mode, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
+
+  night_start_spinbox = lv_spinbox_create(cont);
+  lv_spinbox_set_range(night_start_spinbox, 0, 23);
+  lv_spinbox_set_digit_format(night_start_spinbox, 2, 0);
+  lv_spinbox_set_value(night_start_spinbox, night_mode_start_hour);
+  lv_obj_set_size(night_start_spinbox, 50, 22);
+  lv_obj_set_style_text_font(night_start_spinbox, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align_to(night_start_spinbox, lbl_night_from, LV_ALIGN_OUT_RIGHT_MID, 4, 0);
+
+  lv_obj_t *lbl_night_to = lv_label_create(cont);
+  lv_label_set_text(lbl_night_to, strings->night_to);
+  lv_obj_set_style_text_font(lbl_night_to, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align_to(lbl_night_to, night_start_spinbox, LV_ALIGN_OUT_RIGHT_MID, 6, 0);
+
+  night_end_spinbox = lv_spinbox_create(cont);
+  lv_spinbox_set_range(night_end_spinbox, 0, 23);
+  lv_spinbox_set_digit_format(night_end_spinbox, 2, 0);
+  lv_spinbox_set_value(night_end_spinbox, night_mode_end_hour);
+  lv_obj_set_size(night_end_spinbox, 50, 22);
+  lv_obj_set_style_text_font(night_end_spinbox, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_align_to(night_end_spinbox, lbl_night_to, LV_ALIGN_OUT_RIGHT_MID, 4, 0);
+
   // 'Use F' switch
   lv_obj_t *lbl_u = lv_label_create(cont);
   lv_label_set_text(lbl_u, strings->use_fahrenheit);
   lv_obj_set_style_text_font(lbl_u, get_font_12(), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_align_to(lbl_u, lbl_night_mode, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
+  lv_obj_align_to(lbl_u, lbl_night_from, LV_ALIGN_OUT_BOTTOM_LEFT, 0, vertical_element_spacing);
 
   unit_switch = lv_switch_create(cont);
   lv_obj_align_to(unit_switch, lbl_u, LV_ALIGN_OUT_RIGHT_MID, 6, 0);
@@ -889,6 +955,7 @@ static void settings_event_handler(lv_event_t *e) {
 
   if (tgt == unit_switch && code == LV_EVENT_VALUE_CHANGED) {
     use_fahrenheit = lv_obj_has_state(unit_switch, LV_STATE_CHECKED);
+    weather_settings_dirty = true;
   }
 
   if (tgt == clock_24hr_switch && code == LV_EVENT_VALUE_CHANGED) {
@@ -927,13 +994,27 @@ static void settings_event_handler(lv_event_t *e) {
     prefs.putBool("useNightMode", use_night_mode);
     prefs.putUInt("language", current_language);
 
+    if (night_start_spinbox) {
+      night_mode_start_hour = lv_spinbox_get_value(night_start_spinbox);
+      prefs.putUInt("nightStart", night_mode_start_hour);
+      night_start_spinbox = nullptr;
+    }
+    if (night_end_spinbox) {
+      night_mode_end_hour = lv_spinbox_get_value(night_end_spinbox);
+      prefs.putUInt("nightEnd", night_mode_end_hour);
+      night_end_spinbox = nullptr;
+    }
+
     lv_keyboard_set_textarea(kb, nullptr);
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_del(settings_win);
     settings_win = nullptr;
 
-    fetch_and_update_weather();
+    if (weather_settings_dirty) {
+      weather_settings_dirty = false;
+      fetch_and_update_weather();
+    }
   }
 }
 
@@ -945,7 +1026,7 @@ bool night_mode_should_be_active() {
   if (!use_night_mode) return false;
   
   int hour = timeinfo.tm_hour;
-  return (hour >= NIGHT_MODE_START_HOUR || hour < NIGHT_MODE_END_HOUR);
+  return (hour >= night_mode_start_hour || hour < night_mode_end_hour);
 }
 
 void activate_night_mode() {
@@ -1007,24 +1088,31 @@ void do_geocode_query(const char *q) {
 void fetch_and_update_weather() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi no longer connected. Attempting to reconnect...");
-    WiFi.disconnect();
-    WiFiManager wm;  
-    wm.autoConnect(DEFAULT_CAPTIVE_SSID);
-    delay(1000);  
-    if (WiFi.status() != WL_CONNECTED) { 
+    WiFi.reconnect();
+    for (int i = 0; i < 50; i++) {
+      if (WiFi.status() == WL_CONNECTED) break;
+      delay(100);
+    }
+    if (WiFi.status() != WL_CONNECTED) {
       Serial.println("WiFi connection still unavailable.");
-      return;   
+      return;
     }
     Serial.println("WiFi connection reestablished.");
   }
 
+  if (lbl_loading) {
+    const LocalizedStrings* strings_loading = get_strings(current_language);
+    lv_label_set_text(lbl_loading, strings_loading->updating);
+    lv_obj_clear_flag(lbl_loading, LV_OBJ_FLAG_HIDDEN);
+    lv_timer_handler();
+  }
 
   String url = String("http://api.open-meteo.com/v1/forecast?latitude=")
                + latitude + "&longitude=" + longitude
-               + "&current=temperature_2m,apparent_temperature,is_day,weather_code"
+               + "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,relative_humidity_2m"
                + "&daily=temperature_2m_min,temperature_2m_max,weather_code"
                + "&hourly=temperature_2m,precipitation_probability,is_day,weather_code"
-               + "&forecast_hours=7"
+               + "&forecast_hours=24"
                + "&timezone=auto";
 
   HTTPClient http;
@@ -1034,7 +1122,7 @@ void fetch_and_update_weather() {
     Serial.println("Updated weather from open-meteo: " + url);
 
     String payload = http.getString();
-    DynamicJsonDocument doc(32 * 1024);
+    JsonDocument doc;
 
     if (deserializeJson(doc, payload) == DeserializationError::Ok) {
       float t_now = doc["current"]["temperature_2m"].as<float>();
@@ -1057,6 +1145,12 @@ void fetch_and_update_weather() {
       lv_label_set_text_fmt(lbl_today_temp, "%.0f°%c", t_now, unit);
       lv_label_set_text_fmt(lbl_today_feels_like, "%s %.0f°%c", strings->feels_like_temp, t_ap, unit);
       lv_img_set_src(img_today_icon, choose_image(code_now, is_day));
+
+      float wind = doc["current"]["wind_speed_10m"].as<float>();
+      int humidity = doc["current"]["relative_humidity_2m"].as<int>();
+      if (lbl_today_wind_humidity) {
+        lv_label_set_text_fmt(lbl_today_wind_humidity, "%.0f km/h  %d%%", wind, humidity);
+      }
 
       JsonArray times = doc["daily"]["time"].as<JsonArray>();
       JsonArray tmin = doc["daily"]["temperature_2m_min"].as<JsonArray>();
@@ -1090,14 +1184,29 @@ void fetch_and_update_weather() {
       JsonArray hourly_weather_codes = doc["hourly"]["weather_code"].as<JsonArray>();
       JsonArray hourly_is_day = doc["hourly"]["is_day"].as<JsonArray>();
 
+      // Find the hourly index matching the current local hour
+      struct tm timeinfo;
+      getLocalTime(&timeinfo);
+      int hourly_start_idx = 0;
+      for (int j = 0; j < (int)hours.size(); j++) {
+        const char *hdate = hours[j];
+        int h_hour = atoi(hdate + 11);
+        int h_day = atoi(hdate + 8);
+        if (h_hour == timeinfo.tm_hour && h_day == timeinfo.tm_mday) {
+          hourly_start_idx = j;
+          break;
+        }
+      }
+
       for (int i = 0; i < 7; i++) {
-        const char *date = hours[i];  // "YYYY-MM-DD"
+        int idx = hourly_start_idx + i;
+        if (idx >= (int)hours.size()) break;
+        const char *date = hours[idx];  // "YYYY-MM-DDTHH:MM"
         int hour = atoi(date + 11);
-        int minute = atoi(date + 14);
         String hour_name = hour_of_day(hour);
 
-        float precipitation_probability = precipitation_probabilities[i].as<float>();
-        float temp = hourly_temps[i].as<float>();
+        float precipitation_probability = precipitation_probabilities[idx].as<float>();
+        float temp = hourly_temps[idx].as<float>();
         if (use_fahrenheit) {
           temp = temp * 9.0 / 5.0 + 32.0;
         }
@@ -1109,7 +1218,7 @@ void fetch_and_update_weather() {
         }
         lv_label_set_text_fmt(lbl_precipitation_probability[i], "%.0f%%", precipitation_probability);
         lv_label_set_text_fmt(lbl_hourly_temp[i], "%.0f°%c", temp, unit);
-        lv_img_set_src(img_hourly[i], choose_icon(hourly_weather_codes[i].as<int>(), hourly_is_day[i].as<int>()));
+        lv_img_set_src(img_hourly[i], choose_icon(hourly_weather_codes[idx].as<int>(), hourly_is_day[idx].as<int>()));
       }
 
 
@@ -1118,6 +1227,9 @@ void fetch_and_update_weather() {
     }
   } else {
     Serial.println("HTTP GET failed at " + url);
+  }
+  if (lbl_loading) {
+    lv_obj_add_flag(lbl_loading, LV_OBJ_FLAG_HIDDEN);
   }
   http.end();
 }
